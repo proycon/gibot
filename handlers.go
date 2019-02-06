@@ -100,7 +100,7 @@ func sendNotices(chans []string, categ string, body ...string) {
 		for _, body := range body {
 			message := fmt.Sprintf("[%s] %s", categ, body)
 			throttle.Send(&irc.Message{
-				Command:  irc.NOTICE,
+				Command:  irc.PRIVMSG,
 				Params:   []string{channel},
 				Trailing: message,
 			})
