@@ -30,6 +30,10 @@ func githubHandler(secret string) http.Handler {
 			if err := onGithubPush(event); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
+		case *github.PullRequestEvent:
+			if err := onGithubPullRequest(event); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 		default:
 			http.Error(w, fmt.Sprintf("event type %T not implemented", event), http.StatusNotFound)
 		}
@@ -65,5 +69,29 @@ func onGithubPush(pe *github.PushEvent) error {
 		messages = append(messages, message)
 	}
 	sendNotices(config.Feeds, fullname, messages...)
+	return nil
+}
+
+func onGithubPullRequest(pe *github.PullRequestEvent) error {
+	repoURL := pe.GetRepo().GetURL()
+	fullname := pe.GetRepo().GetFullName()
+	prPrefix := pe.GetRepo().GetURL() + "/pull/"
+	number := pe.GetNumber()
+	title := pe.GetPullRequest().GetTitle()
+	action := pe.GetAction()
+    if action == "opened" || action == "closed" || action == "reopened" {
+        if _, ok := repos[repoURL]; !ok {
+            return fmt.Errorf("unknown repo: %s", repoURL)
+        }
+        var messages []string
+        message := fmt.Sprintf("%s/%d — pull request %s by @%s — %s",
+            prPrefix,
+            number,
+            action,
+            pe.GetSender().GetName(),
+            title)
+        messages = append(messages, message)
+        sendNotices(config.Feeds, fullname, messages...)
+    }
 	return nil
 }
