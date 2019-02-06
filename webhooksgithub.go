@@ -34,6 +34,14 @@ func githubHandler(secret string) http.Handler {
 			if err := onGithubPullRequest(event); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
+		case *github.IssueEvent:
+			if err := onGithubIssue(event); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+		case *github.IssueCommentEvent:
+			if err := onGithubIssueComment(event); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 		default:
 			http.Error(w, fmt.Sprintf("event type %T not implemented", event), http.StatusNotFound)
 		}
@@ -90,6 +98,49 @@ func onGithubPullRequest(pe *github.PullRequestEvent) error {
             action,
             pe.GetSender().GetName(),
             title)
+        messages = append(messages, message)
+        sendNotices(config.Feeds, fullname, messages...)
+    }
+	return nil
+}
+
+func onGithubIssue(pe *github.IssueEvent) error {
+	repoURL := pe.GetIssue().GetRepository().GetURL()
+	fullname := pe.GetIssue().GetRepository().GetFullName()
+	prefix := pe.GetIssue().GetRepository().GetURL() + "/issues/"
+	event := pe.GetEvent()
+    if event == "opened" || event == "created" || event == "closed" || event == "reopened" {
+        if _, ok := repos[repoURL]; !ok {
+            return fmt.Errorf("unknown repo: %s", repoURL)
+        }
+        var messages []string
+        message := fmt.Sprintf("%s/%d — Issue %s by @%s — %s",
+            prefix,
+            pe.GetIssue().GetNumber(),
+            event,
+            pe.GetActor().GetName(),
+            pe.GetIssue().GetTitle())
+        messages = append(messages, message)
+        sendNotices(config.Feeds, fullname, messages...)
+    }
+	return nil
+}
+
+func onGithubIssueComment(pe *github.IssueCommentEvent) error {
+	repoURL := pe.GetRepo().GetURL()
+	fullname := pe.GetRepo().GetFullName()
+	prefix := pe.GetRepo().GetURL() + "/issues/"
+	action := pe.GetAction()
+    if action == "created" {
+        if _, ok := repos[repoURL]; !ok {
+            return fmt.Errorf("unknown repo: %s", repoURL)
+        }
+        var messages []string
+        message := fmt.Sprintf("%s/%d — Comment on issue by @%s — %s",
+            prefix,
+            pe.GetIssue().GetNumber(),
+            pe.GetSender().GetName(),
+            pe.GetIssue().GetTitle())
         messages = append(messages, message)
         sendNotices(config.Feeds, fullname, messages...)
     }
