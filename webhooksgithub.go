@@ -100,11 +100,11 @@ func onGithubPullRequest(pe *github.PullRequestEvent) error {
 	action := pe.GetAction()
     if action == "opened" || action == "closed" || action == "reopened" {
         var messages []string
-        message := fmt.Sprintf("%s/%d — pull request %s by @%s — %s",
+        message := fmt.Sprintf("%s%d — pull request %s by @%s — %s",
             prPrefix,
             number,
             action,
-            pe.GetSender().GetName(),
+            pe.GetSender().GetLogin(),
             title)
         messages = append(messages, message)
         sendNotices(config.Feeds, fullname, messages...)
@@ -113,16 +113,16 @@ func onGithubPullRequest(pe *github.PullRequestEvent) error {
 }
 
 func onGithubIssue(pe *github.IssuesEvent) error {
-	fullname := pe.GetIssue().GetRepository().GetFullName()
-	prefix := pe.GetIssue().GetRepository().GetURL() + "/issues/"
+	fullname := pe.GetRepo().GetFullName()
+	prefix := pe.GetRepo().GetURL() + "/issues/"
 	action := pe.GetAction()
     if action == "opened" || action == "created" || action == "closed" || action == "reopened" {
         var messages []string
-        message := fmt.Sprintf("%s/%d — Issue %s by @%s — %s",
+        message := fmt.Sprintf("%s%d — Issue %s by @%s — %s",
             prefix,
             pe.GetIssue().GetNumber(),
             action,
-            pe.GetSender().GetName(),
+            pe.GetSender().GetLogin(),
             pe.GetIssue().GetTitle())
         messages = append(messages, message)
         sendNotices(config.Feeds, fullname, messages...)
@@ -139,7 +139,7 @@ func onGithubIssueComment(pe *github.IssueCommentEvent) error {
         message := fmt.Sprintf("%s/%d — Comment on issue by @%s — %s",
             prefix,
             pe.GetIssue().GetNumber(),
-            pe.GetSender().GetName(),
+            pe.GetSender().GetLogin(),
             pe.GetIssue().GetTitle())
         messages = append(messages, message)
         sendNotices(config.Feeds, fullname, messages...)
@@ -151,7 +151,7 @@ func onGithubStar(pe *github.WatchEvent) error {
 	fullname := pe.GetRepo().GetFullName()
     var messages []string
     message := fmt.Sprintf("Starred by @%s! \\o/",
-        pe.GetSender().GetName())
+        pe.GetSender().GetLogin())
     messages = append(messages, message)
     sendNotices(config.Feeds, fullname, messages...)
 	return nil
@@ -161,7 +161,7 @@ func onGithubRelease(pe *github.ReleaseEvent) error {
 	fullname := pe.GetRepo().GetFullName()
     var messages []string
     message := fmt.Sprintf("%s released %s - %s",
-        pe.GetSender().GetName(),
+        pe.GetSender().GetLogin(),
         pe.GetRelease().GetTagName(),
         pe.GetRelease().GetURL())
     messages = append(messages, message)
