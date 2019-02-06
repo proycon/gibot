@@ -38,8 +38,8 @@ func githubHandler(secret string) http.Handler {
 			if err := onGithubPullRequest(event); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
-		case *github.IssueEvent:
-            log.Printf("Got issue event from Github")
+		case *github.IssuesEvent:
+            log.Printf("Got issues event from Github")
 			if err := onGithubIssue(event); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
@@ -112,17 +112,17 @@ func onGithubPullRequest(pe *github.PullRequestEvent) error {
 	return nil
 }
 
-func onGithubIssue(pe *github.IssueEvent) error {
+func onGithubIssue(pe *github.IssuesEvent) error {
 	fullname := pe.GetIssue().GetRepository().GetFullName()
 	prefix := pe.GetIssue().GetRepository().GetURL() + "/issues/"
-	event := pe.GetEvent()
-    if event == "opened" || event == "created" || event == "closed" || event == "reopened" {
+	action := pe.GetAction()
+    if action == "opened" || action == "created" || action == "closed" || action == "reopened" {
         var messages []string
         message := fmt.Sprintf("%s/%d — Issue %s by @%s — %s",
             prefix,
             pe.GetIssue().GetNumber(),
-            event,
-            pe.GetActor().GetName(),
+            action,
+            pe.GetSender().GetName(),
             pe.GetIssue().GetTitle())
         messages = append(messages, message)
         sendNotices(config.Feeds, fullname, messages...)
