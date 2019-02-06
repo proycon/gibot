@@ -136,7 +136,7 @@ func onGithubIssueComment(pe *github.IssueCommentEvent) error {
 	action := pe.GetAction()
     if action == "created" {
         var messages []string
-        message := fmt.Sprintf("%s/%d — Comment on issue by @%s — %s",
+        message := fmt.Sprintf("%s%d — Comment on issue by @%s — %s",
             prefix,
             pe.GetIssue().GetNumber(),
             pe.GetSender().GetLogin(),
