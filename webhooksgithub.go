@@ -46,6 +46,10 @@ func githubHandler(secret string) http.Handler {
 			if err := onGithubStar(event); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
+		case *github.ReleaseEvent:
+			if err := onGithubRelease(event); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 		default:
 			http.Error(w, fmt.Sprintf("event type %T not implemented", event), http.StatusNotFound)
 		}
@@ -160,6 +164,22 @@ func onGithubStar(pe *github.WatchEvent) error {
     var messages []string
     message := fmt.Sprintf("Starred by @%s! \\o/",
         pe.GetSender().GetName())
+    messages = append(messages, message)
+    sendNotices(config.Feeds, fullname, messages...)
+	return nil
+}
+
+func onGithubRelease(pe *github.ReleaseEvent) error {
+	repoURL := pe.GetRepo().GetURL()
+	fullname := pe.GetRepo().GetFullName()
+    if _, ok := repos[repoURL]; !ok {
+        return fmt.Errorf("unknown repo: %s", repoURL)
+    }
+    var messages []string
+    message := fmt.Sprintf("%s released %s - %s",
+        pe.GetSender().GetName(),
+        pe.GetRelease().GetTagName(),
+        pe.GetRelease().GetURL())
     messages = append(messages, message)
     sendNotices(config.Feeds, fullname, messages...)
 	return nil
