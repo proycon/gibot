@@ -78,6 +78,7 @@ func onPrivmsg(s ircx.Sender, m *irc.Message) {
 
 func sendNotice(channel, categ, body string) {
 	message := fmt.Sprintf("[%s] %s", categ, body)
+    log.Printf(message)
 	throttle.Send(&irc.Message{
 		Command:  irc.NOTICE,
 		Params:   []string{channel},

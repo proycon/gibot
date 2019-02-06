@@ -66,13 +66,8 @@ func githubHandler(secret string) http.Handler {
 }
 
 func onGithubPush(pe *github.PushEvent) error {
-	repoURL := pe.GetRepo().GetURL()
 	fullname := pe.GetRepo().GetFullName()
 	commitPrefix := pe.GetRepo().GetURL() + "/commit/"
-	// TODO: repos is gitlab-specific. introduce a separate struct
-	if _, ok := repos[repoURL]; !ok {
-		return fmt.Errorf("unknown repo: %s", repoURL)
-	}
 	var messages []string
 	for _, c := range pe.Commits {
 		if mergeMessage.MatchString(c.GetMessage()) {
@@ -98,16 +93,12 @@ func onGithubPush(pe *github.PushEvent) error {
 }
 
 func onGithubPullRequest(pe *github.PullRequestEvent) error {
-	repoURL := pe.GetRepo().GetURL()
 	fullname := pe.GetRepo().GetFullName()
 	prPrefix := pe.GetRepo().GetURL() + "/pull/"
 	number := pe.GetNumber()
 	title := pe.GetPullRequest().GetTitle()
 	action := pe.GetAction()
     if action == "opened" || action == "closed" || action == "reopened" {
-        if _, ok := repos[repoURL]; !ok {
-            return fmt.Errorf("unknown repo: %s", repoURL)
-        }
         var messages []string
         message := fmt.Sprintf("%s/%d — pull request %s by @%s — %s",
             prPrefix,
@@ -122,14 +113,10 @@ func onGithubPullRequest(pe *github.PullRequestEvent) error {
 }
 
 func onGithubIssue(pe *github.IssueEvent) error {
-	repoURL := pe.GetIssue().GetRepository().GetURL()
 	fullname := pe.GetIssue().GetRepository().GetFullName()
 	prefix := pe.GetIssue().GetRepository().GetURL() + "/issues/"
 	event := pe.GetEvent()
     if event == "opened" || event == "created" || event == "closed" || event == "reopened" {
-        if _, ok := repos[repoURL]; !ok {
-            return fmt.Errorf("unknown repo: %s", repoURL)
-        }
         var messages []string
         message := fmt.Sprintf("%s/%d — Issue %s by @%s — %s",
             prefix,
@@ -144,14 +131,10 @@ func onGithubIssue(pe *github.IssueEvent) error {
 }
 
 func onGithubIssueComment(pe *github.IssueCommentEvent) error {
-	repoURL := pe.GetRepo().GetURL()
 	fullname := pe.GetRepo().GetFullName()
 	prefix := pe.GetRepo().GetURL() + "/issues/"
 	action := pe.GetAction()
     if action == "created" {
-        if _, ok := repos[repoURL]; !ok {
-            return fmt.Errorf("unknown repo: %s", repoURL)
-        }
         var messages []string
         message := fmt.Sprintf("%s/%d — Comment on issue by @%s — %s",
             prefix,
@@ -165,11 +148,7 @@ func onGithubIssueComment(pe *github.IssueCommentEvent) error {
 }
 
 func onGithubStar(pe *github.WatchEvent) error {
-	repoURL := pe.GetRepo().GetURL()
 	fullname := pe.GetRepo().GetFullName()
-    if _, ok := repos[repoURL]; !ok {
-        return fmt.Errorf("unknown repo: %s", repoURL)
-    }
     var messages []string
     message := fmt.Sprintf("Starred by @%s! \\o/",
         pe.GetSender().GetName())
@@ -179,11 +158,7 @@ func onGithubStar(pe *github.WatchEvent) error {
 }
 
 func onGithubRelease(pe *github.ReleaseEvent) error {
-	repoURL := pe.GetRepo().GetURL()
 	fullname := pe.GetRepo().GetFullName()
-    if _, ok := repos[repoURL]; !ok {
-        return fmt.Errorf("unknown repo: %s", repoURL)
-    }
     var messages []string
     message := fmt.Sprintf("%s released %s - %s",
         pe.GetSender().GetName(),
