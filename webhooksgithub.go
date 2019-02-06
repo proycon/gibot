@@ -5,6 +5,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -26,31 +27,39 @@ func githubHandler(secret string) http.Handler {
 		switch event := event.(type) {
 		case *github.PingEvent:
 			w.WriteHeader(http.StatusOK)
+            log.Printf("Got ping event from Github")
 		case *github.PushEvent:
+            log.Printf("Got push event from Github")
 			if err := onGithubPush(event); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
 		case *github.PullRequestEvent:
+            log.Printf("Got PR event from Github")
 			if err := onGithubPullRequest(event); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
 		case *github.IssueEvent:
+            log.Printf("Got issue event from Github")
 			if err := onGithubIssue(event); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
 		case *github.IssueCommentEvent:
+            log.Printf("Got issue comment event from Github")
 			if err := onGithubIssueComment(event); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
 		case *github.WatchEvent:
+            log.Printf("Got watch event from Github")
 			if err := onGithubStar(event); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
 		case *github.ReleaseEvent:
+            log.Printf("Got release event from Github")
 			if err := onGithubRelease(event); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
 		default:
+            log.Printf(fmt.Sprintf("Got unhandled event %T from Github", event), err)
 			http.Error(w, fmt.Sprintf("event type %T not implemented", event), http.StatusNotFound)
 		}
 	})
