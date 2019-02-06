@@ -67,7 +67,7 @@ func githubHandler(secret string) http.Handler {
 
 func onGithubPush(pe *github.PushEvent) error {
 	fullname := pe.GetRepo().GetFullName()
-	commitPrefix := pe.GetRepo().GetURL() + "/commit/"
+	commitPrefix := pe.GetRepo().GetHTMLURL() + "/commit/"
 	var messages []string
 	for _, c := range pe.Commits {
 		if mergeMessage.MatchString(c.GetMessage()) {
@@ -94,7 +94,7 @@ func onGithubPush(pe *github.PushEvent) error {
 
 func onGithubPullRequest(pe *github.PullRequestEvent) error {
 	fullname := pe.GetRepo().GetFullName()
-	prPrefix := pe.GetRepo().GetURL() + "/pull/"
+	prPrefix := pe.GetRepo().GetHTMLURL() + "/pull/"
 	number := pe.GetNumber()
 	title := pe.GetPullRequest().GetTitle()
 	action := pe.GetAction()
@@ -114,7 +114,7 @@ func onGithubPullRequest(pe *github.PullRequestEvent) error {
 
 func onGithubIssue(pe *github.IssuesEvent) error {
 	fullname := pe.GetRepo().GetFullName()
-	prefix := pe.GetRepo().GetURL() + "/issues/"
+	prefix := pe.GetRepo().GetHTMLURL() + "/issues/"
 	action := pe.GetAction()
     if action == "opened" || action == "created" || action == "closed" || action == "reopened" {
         var messages []string
@@ -132,7 +132,7 @@ func onGithubIssue(pe *github.IssuesEvent) error {
 
 func onGithubIssueComment(pe *github.IssueCommentEvent) error {
 	fullname := pe.GetRepo().GetFullName()
-	prefix := pe.GetRepo().GetURL() + "/issues/"
+	prefix := pe.GetRepo().GetHTMLURL() + "/issues/"
 	action := pe.GetAction()
     if action == "created" {
         var messages []string
@@ -163,7 +163,7 @@ func onGithubRelease(pe *github.ReleaseEvent) error {
     message := fmt.Sprintf("%s released %s - %s",
         pe.GetSender().GetLogin(),
         pe.GetRelease().GetTagName(),
-        pe.GetRelease().GetURL())
+        pe.GetRelease().GetHTMLURL())
     messages = append(messages, message)
     sendNotices(config.Feeds, fullname, messages...)
 	return nil
